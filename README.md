@@ -10,12 +10,13 @@ A comprehensive template for building software projects using spec-driven develo
 
 ### 主な特徴
 
-- 📋 **10ステップのワークフロー** - プロジェクト初期化からコミットまでの完全な開発サイクル
-- 📝 **包括的なテンプレート** - プロジェクトレベル＆機能レベルの仕様書テンプレート
-- 🤖 **12のスラッシュコマンド** - 開発プロセスを自動化
+- 📋 **11ステップのワークフロー** - プロジェクト初期化からコミットまでの完全な開発サイクル
+- 📝 **包括的なテンプレート** - プロジェクトレベル＆機能レベルの仕様書テンプレート（8個）
+- 🤖 **15のスラッシュコマンド** - 開発プロセスとメンテナンスを自動化
 - ✅ **品質ゲート** - テスト、型チェック、Lint、セキュリティチェックの自動実行
 - 🎯 **TDD対応** - テスト駆動開発をサポート
 - 📊 **ADR管理** - アーキテクチャ決定の記録
+- 🔄 **自動メンテナンス** - テンプレート健全性チェックと更新管理システム
 
 ## クイックスタート
 
@@ -479,10 +480,11 @@ PostgreSQL 15を採用
 
 ### 公式ドキュメント
 
-- [ワークフロー詳細ガイド](./docs/WORKFLOW_GUIDE.md) - 10ステップワークフローの詳細
+- [ワークフロー詳細ガイド](./docs/WORKFLOW_GUIDE.md) - 11ステップワークフローの詳細
 - [ステップ別詳細説明](./docs/WORKFLOW_STEPS_DETAIL.md) - 各ステップの実践例
 - [テンプレート使用ガイド](./docs/SPEC_TEMPLATES_GUIDE.md) - テンプレートの使い方
 - [MCPセットアップ](./docs/MCP_SETUP.md) - Model Context Protocol セットアップ
+- [メンテナンスガイド](./docs/MAINTENANCE.md) - テンプレートの保守と更新方法
 
 ### 実践例
 
@@ -551,15 +553,64 @@ npm run type-check
 npm run lint
 ```
 
+## テンプレートのメンテナンス
+
+このテンプレート自体も継続的に進化しています。定期的な更新とメンテナンスが可能です。
+
+### 健全性チェック
+
+```bash
+# テンプレートの健全性を確認（月1回推奨）
+/check-template-health
+```
+
+このコマンドは以下をチェック:
+- Claude Codeとの互換性
+- 依存関係の更新状況
+- セキュリティ脆弱性
+- ドキュメントの最新性
+- 総合的な健全性スコア（0-100）
+
+### 更新スキャン
+
+```bash
+# 外部環境の変更を詳細にスキャン
+/template-update-scan
+```
+
+以下を分析して更新計画を提案:
+- Claude Codeの新機能
+- Node.js/TypeScript/Next.jsのアップデート
+- ベストプラクティスの進化
+- セキュリティアップデート
+
+### テンプレート更新のワークフロー
+
+```bash
+# 1. 更新ブランチを作成
+git checkout -b template-update/v1.x
+
+# 2. 詳細スキャンを実行
+/template-update-scan
+
+# 3. 推奨される更新を実施
+# [更新作業]
+
+# 4. マージ準備（クリーンアップと検証）
+/merge-template-update
+
+# 5. mainにマージ
+git checkout main
+git merge template-update/v1.x
+```
+
+詳細は [メンテナンスガイド](./docs/MAINTENANCE.md) を参照してください。
+
 ## コントリビューション
 
 このテンプレートへの貢献を歓迎します！
 
-1. このリポジトリをフォーク
-2. フィーチャーブランチを作成 (`git checkout -b feature/amazing-improvement`)
-3. 変更をコミット (`git commit -m 'Add amazing improvement'`)
-4. ブランチにプッシュ (`git push origin feature/amazing-improvement`)
-5. プルリクエストを作成
+詳細は [CONTRIBUTING.md](./CONTRIBUTING.md) を参照してください。
 
 ## ライセンス
 
@@ -567,8 +618,13 @@ MIT License - 詳細は [LICENSE](./LICENSE) を参照してください。
 
 ## サポート
 
-- **GitHub Issues**: [Issue Tracker](https://github.com/your-org/spec-driven-template/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/spec-driven-template/discussions)
+- **GitHub Issues**: [Issue Tracker](https://github.com/ronkovic/spec-driven-template/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ronkovic/spec-driven-template/discussions)
+- **Documentation**: [メンテナンスガイド](./docs/MAINTENANCE.md)
+
+## 変更履歴
+
+変更履歴の詳細は [CHANGELOG.md](./CHANGELOG.md) を参照してください。
 
 ## 謝辞
 
@@ -579,7 +635,8 @@ MIT License - 詳細は [LICENSE](./LICENSE) を参照してください。
 ---
 
 **作成日**: 2025-11-13
-**バージョン**: 1.0
+**最終更新**: 2025-11-14
+**現在のバージョン**: 1.1.0
 **メンテナンス**: Active
 
 Made with ❤️ using Spec-Driven Development

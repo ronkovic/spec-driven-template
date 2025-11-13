@@ -1,0 +1,96 @@
+{
+  "version": "1.1.0",
+  "lastUpdated": "2025-11-14",
+  "templateName": "Spec-Driven Development Template",
+  "repository": "https://github.com/ronkovic/spec-driven-template",
+  "claudeCodeVersion": {
+    "minimum": "1.0.0",
+    "recommended": "1.0.0",
+    "tested": "1.0.0"
+  },
+  "dependencies": {
+    "node": ">=20.0.0",
+    "typescript": "^5.0.0",
+    "nextjs": "^15.0.0"
+  },
+  "features": {
+    "slashCommands": 15,
+    "templates": 8,
+    "examples": 4,
+    "scripts": 2
+  },
+  "maintenance": {
+    "updateSchedule": "monthly",
+    "lastHealthCheck": "2025-11-14",
+    "healthScore": 98,
+    "autoUpdate": {
+      "enabled": false,
+      "allowBreakingChanges": false,
+      "allowMinorUpdates": true,
+      "allowPatchUpdates": true
+    }
+  },
+  "compatibility": {
+    "operatingSystems": ["macOS", "Linux", "Windows"],
+    "shells": ["bash", "zsh", "powershell"],
+    "editors": ["Claude Code", "VS Code", "Any text editor"]
+  },
+  "quality": {
+    "minimumHealthScore": 80,
+    "requiredTests": [],
+    "requiredDocs": [
+      "README.md",
+      "CONTRIBUTING.md",
+      "LICENSE",
+      "CHANGELOG.md",
+      "MAINTENANCE.md"
+    ]
+  },
+  "updateHistory": [
+    {
+      "version": "1.1.0",
+      "date": "2025-11-14",
+      "type": "minor",
+      "changes": [
+        "Add template maintenance system",
+        "Add /check-template-health command",
+        "Add /template-update-scan command",
+        "Add /merge-template-update command",
+        "Add MAINTENANCE.md documentation",
+        "Add CHANGELOG.md for version tracking",
+        "Add .template-config.json for configuration",
+        "Add .template-ignore for merge cleanup"
+      ],
+      "breakingChanges": false,
+      "migrationRequired": false
+    },
+    {
+      "version": "1.0.0",
+      "date": "2025-11-13",
+      "type": "major",
+      "changes": [
+        "Initial release",
+        "12 slash commands for workflow automation",
+        "8 comprehensive templates (5 project + 3 feature)",
+        "Complete documentation in Japanese and English",
+        "4 detailed examples",
+        "Initialization scripts for Unix/Mac and Windows"
+      ],
+      "breakingChanges": false,
+      "migrationRequired": false
+    }
+  ],
+  "maintainers": [
+    {
+      "name": "ronkovic",
+      "github": "ronkovic",
+      "role": "creator"
+    }
+  ],
+  "support": {
+    "documentation": "https://github.com/ronkovic/spec-driven-template#readme",
+    "issues": "https://github.com/ronkovic/spec-driven-template/issues",
+    "discussions": "https://github.com/ronkovic/spec-driven-template/discussions"
+  },
+  "license": "MIT"
+}
