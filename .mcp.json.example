@@ -1,0 +1,68 @@
+{
+    "mcpServers": {
+      "filesystem": {
+        "type": "stdio",
+        "command": "npx",
+        "args": [
+          "-y",
+          "@modelcontextprotocol/server-filesystem",
+          "/Users/<YOUR_USERNAME>/Desktop",
+          "/Users/<YOUR_USERNAME>/Downloads",
+          "/Users/<YOUR_USERNAME>/workspace"
+        ]
+      },
+      "context7": {
+        "type": "stdio",
+        "command": "npx",
+        "args": [
+          "-y",
+          "@upstash/context7-mcp@latest"
+        ],
+        "env": {}
+      },
+      "kiri": {
+        "type": "stdio",
+        "command": "npx",
+        "args": [
+          "-y",
+          "kiri-mcp-server@latest",
+          "--repo",
+          ".",
+          "--db",
+          ".kiri/index.duckdb",
+          "--watch"
+        ]
+      },
+      "serena": {
+        "type": "stdio",
+        "command": "uvx",
+        "args": [
+          "--from",
+          "git+https://github.com/oraios/serena",
+          "serena-mcp-server",
+          "--context",
+          "ide-assistant",
+          "--project",
+          "/Users/<YOUR_USERNAME>/workspace/sandbox/a2a-demo"
+        ],
+        "env": {}
+      },
+      "next-devtools": {
+        "type": "stdio",
+        "command": "npx",
+        "args": [
+          "-y",
+          "next-devtools-mcp@latest"
+        ]
+      },
+      "chrome-devtools": {
+        "type": "stdio",
+        "command": "npx",
+        "args": [
+          "-y",
+          "chrome-devtools-mcp@latest"
+        ],
+        "env": {}
+      }
+    }
+  }

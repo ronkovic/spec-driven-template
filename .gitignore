@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
+.env
+cli/.env
+backend/.env
+frontend/.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Cache
+.embeddings-cache/
+.search-cache/
+
+# Documents (optional - uncomment if you don't want to commit docs)
+# docs/
+
+# MCP
+.mcp.json
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Kiri search index (generated)
+.kiri/
+
+# Internal verification documents
+*_READY.md
+*_VERIFICATION.md
