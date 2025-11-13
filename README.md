@@ -586,23 +586,71 @@ npm run lint
 
 ### テンプレート更新のワークフロー
 
+#### テンプレートリポジトリのメンテナンス（テンプレート開発者向け）
+
 ```bash
 # 1. 更新ブランチを作成
+git checkout main
+git pull origin main
 git checkout -b template-update/v1.x
 
 # 2. 詳細スキャンを実行
 /template-update-scan
 
 # 3. 推奨される更新を実施
-# [更新作業]
+# [更新作業: 依存関係、ドキュメント、テンプレートファイルなど]
 
 # 4. マージ準備（クリーンアップと検証）
 /merge-template-update
 
-# 5. mainにマージ
+# 5. CHANGELOGを更新
+# CHANGELOG.mdに変更内容を記録
+
+# 6. mainにマージ
 git checkout main
 git merge template-update/v1.x
+
+# 7. バージョンタグを作成
+git tag -a v1.x.0 -m "Release v1.x.0"
+
+# 8. GitHubにプッシュ
+git push origin main --tags
+
+# 9. ローカルの更新ブランチを削除
+git branch -d template-update/v1.x
 ```
+
+#### プロジェクトでテンプレートの最新版を取得（プロジェクト利用者向け）
+
+テンプレートから作成したプロジェクトで、テンプレートの最新版を取り込む方法:
+
+```bash
+# 1. テンプレートリポジトリをリモートに追加（初回のみ）
+git remote add template https://github.com/ronkovic/spec-driven-template.git
+
+# 2. テンプレートの最新版を取得
+git fetch template
+
+# 3. 変更内容を確認
+git log HEAD..template/main --oneline
+
+# 4. テンプレートの更新をマージ
+git merge template/main
+
+# 5. 競合があれば解決
+# プロジェクト固有のファイルとテンプレートファイルの競合を解決
+
+# 6. マージをコミット
+git commit -m "chore: update from template v1.x.0"
+
+# 7. リモートにプッシュ
+git push origin main
+```
+
+**注意事項:**
+- プロジェクト固有の変更（docs/PROJECT_OVERVIEW.md など）は上書きされないように注意
+- 競合が発生した場合は、プロジェクトの変更を優先
+- `.template-config.json` は削除または `repository` フィールドを変更すること
 
 詳細は [メンテナンスガイド](./docs/MAINTENANCE.md) を参照してください。
 
