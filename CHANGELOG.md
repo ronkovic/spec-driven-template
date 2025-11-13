@@ -8,41 +8,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- GitHub Actions for automated health checks
 - Template health monitoring dashboard
-- Automated dependency updates
 - Community-contributed templates
 - Multi-language support expansion
+- Additional MCP integrations
+- Enhanced testing frameworks
 
 ## [1.1.0] - 2025-11-14
 
 ### Added
+
+#### Phase 1: Core Maintenance System
 - **Template Maintenance System**: Comprehensive maintenance tools for keeping the template up-to-date
-  - `/check-template-health` command: Health check and scoring system for template quality
+  - `/check-template-health` command: Health check and scoring system for template quality (0-100 scale)
   - `/template-update-scan` command: Automated scanning for ecosystem changes and update requirements
   - `/merge-template-update` command: Safe cleanup and merge preparation for template updates
 - **Configuration Management**:
   - `.template-config.json`: Central configuration file with version tracking and metadata
   - `.template-ignore`: Patterns for project-specific files to exclude during template updates
 - **Documentation**:
-  - `MAINTENANCE.md`: Complete guide for template maintenance and update processes
+  - `docs/MAINTENANCE.md`: Complete guide for template maintenance and update processes (550+ lines)
   - `CHANGELOG.md`: Version history and change tracking
 - **Version Tracking**: Comprehensive update history in `.template-config.json`
 
+#### Phase 2/3: Automation Tools
+- **GitHub Actions**: Automated health monitoring (template repository only)
+  - `.github/workflows/template-health-check.yml`: Monthly automated health checks
+  - Repository detection: Automatically skips on projects created from template
+  - Structure validation, documentation quality checks, version consistency
+  - Auto-creates issues for critical failures
+- **Agents**: Specialized automation agents
+  - `template-health-agent.md` (Explore): Comprehensive health analysis with 5-category scoring
+  - `template-updater-agent.md` (general-purpose): Automated problem fixing with rollback support
+- **Skills**: Reusable maintenance skills
+  - `dependency-updater.md`: Safe npm dependency management with phased updates
+
 ### Changed
 - Updated `.gitignore` with additional patterns for local files and verification documents
-- Enhanced README.md with maintenance information and links to new documentation
-- Updated TEMPLATE_CHECKLIST.md to include maintenance system components
+- Enhanced `README.md` with maintenance information section and links to new documentation
+- Updated `TEMPLATE_CHECKLIST.md` to include maintenance system components
+- Updated `.template-ignore` to preserve GitHub Actions workflow
+- Enhanced `docs/MAINTENANCE.md` with automation tools section
 
 ### Improved
-- Template now has self-updating capabilities
+- Template now has self-updating capabilities with automated health monitoring
 - Better tracking of compatibility and dependencies
 - Clear guidelines for version management and releases
+- Automated detection of ecosystem changes (Claude Code, Node.js, TypeScript, frameworks)
+- Safe update workflow with dry-run mode and automatic rollback
 
 ### Technical Details
-- Increased slash commands from 12 to 15
-- Added automated quality scoring (0-100 scale)
+- **Files**: 45 → 56 (+11 files)
+- **Slash Commands**: 12 → 15 (+3 commands)
+- **Agents**: 0 → 2 (template-health, template-updater)
+- **Skills**: 3 → 4 (+dependency-updater)
+- **GitHub Actions**: 0 → 1 (template-health-check)
+- Added automated quality scoring (0-100 scale, 5 categories)
 - Introduced branch strategy for template updates (`template-update/*`)
+- Repository detection prevents Actions from running on derived projects
 
 ## [1.0.0] - 2025-11-13
 
