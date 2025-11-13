@@ -200,6 +200,9 @@ desktop.ini
 !.gitignore
 !.gitattributes
 
+# Keep GitHub Actions (template repository only)
+!.github/workflows/template-health-check.yml
+
 # ============================================
 # カスタムパターン
 # ============================================

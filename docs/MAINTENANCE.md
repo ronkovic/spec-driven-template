@@ -404,6 +404,88 @@ MAJOR.MINOR.PATCH
 - [ ] タグが付けられている
 - [ ] 変更内容がCHANGELOGに記録
 
+## 自動化ツール
+
+### GitHub Actions
+
+テンプレートリポジトリでは、GitHub Actionsが自動的にヘルスチェックを実行します。
+
+**ワークフロー**: `.github/workflows/template-health-check.yml`
+
+**実行タイミング:**
+- 月次（毎月1日）
+- template-update/* ブランチへのpush
+- mainへのPull Request
+- 手動トリガー
+
+**リポジトリ検出:**
+テンプレートから作成されたプロジェクトでは、このワークフローは自動的にスキップされます。`.template-config.json`の`repository`フィールドでテンプレートリポジトリかどうかを判定します。
+
+```yaml
+# .template-config.jsonの例
+{
+  "repository": "https://github.com/ronkovic/spec-driven-template"
+}
+```
+
+### サブエージェント
+
+#### template-health-agent
+
+**タイプ**: Explore
+**役割**: テンプレートの健全性を包括的に分析
+
+**分析項目:**
+- 構造の完全性（ファイル、ディレクトリ）
+- 互換性（Claude Code、Node.js、フレームワーク）
+- ドキュメント品質（リンク、最新性）
+- セキュリティ（脆弱性、非推奨パッケージ）
+- 最新性（更新頻度、外部環境との比較）
+
+**出力**: JSON/Markdown形式の詳細レポート
+
+#### template-updater-agent
+
+**タイプ**: general-purpose
+**役割**: 検出された問題を自動修正
+
+**更新可能な項目:**
+- 依存関係の更新（自動）
+- 設定ファイルの更新（自動）
+- ドキュメントの日付/バージョン更新（自動）
+- .gitignoreパターンの追加（自動）
+- テンプレートファイルの改善（手動承認）
+
+**安全機能:**
+- ドライランモード
+- 自動バックアップ
+- ロールバック機能
+- 更新後の自動検証
+
+### スキル
+
+#### dependency-updater
+
+**目的**: package.jsonと依存関係の安全な自動更新
+
+**機能:**
+- 現状分析（npm outdated, npm audit）
+- 段階的更新（Security → Patch → Minor → Major）
+- 自動ロールバック
+- Breaking changes検出
+
+**使用例:**
+```bash
+# セキュリティ更新
+npm audit fix
+
+# Patch/Minor更新
+npm update
+
+# 検証
+npm test && npm run build
+```
+
 ## トラブルシューティング
 
 ### 健全性スコアが低い
@@ -414,6 +496,23 @@ MAJOR.MINOR.PATCH
 1. `/template-update-scan` で詳細を確認
 2. 優先度の高い項目から対応
 3. 各修正後に再チェック
+
+### GitHub Actions が実行されない
+
+**症状**: テンプレートリポジトリでワークフローが実行されない
+
+**対処法:**
+1. `.template-config.json`の`repository`フィールドを確認
+2. 正しいリポジトリURLが設定されているか確認
+3. ワークフローファイルが`.github/workflows/`に存在するか確認
+
+### プロジェクトで意図せずActions が実行される
+
+**症状**: テンプレートから作成したプロジェクトでワークフローが実行される
+
+**対処法:**
+1. `.template-config.json`を削除または`repository`フィールドを変更
+2. または`.github/workflows/template-health-check.yml`を削除
 
 ### マージ時の競合
 

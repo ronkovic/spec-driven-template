@@ -1,0 +1,273 @@
+name: Template Health Check
+
+# このワークフローはテンプレートリポジトリでのみ実行されます
+# テンプレートから作成されたプロジェクトでは実行されません
+
+on:
+  # 月次実行（毎月1日の0時UTC）
+  schedule:
+    - cron: '0 0 1 * *'
+
+  # 手動実行を許可
+  workflow_dispatch:
+
+  # template-update/* ブランチへのプッシュ時
+  push:
+    branches:
+      - 'template-update/**'
+
+  # Pull Request時（mainへのマージ前チェック）
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # リポジトリ識別ジョブ
+  check-repository:
+    name: Check if Template Repository
+    runs-on: ubuntu-latest
+    outputs:
+      is-template: ${{ steps.check.outputs.is-template }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if this is the template repository
+        id: check
+        run: |
+          # .template-config.json の存在で判定
+          if [ -f ".template-config.json" ]; then
+            # リポジトリURLをチェック
+            REPO_URL=$(jq -r '.repository' .template-config.json 2>/dev/null || echo "")
+            CURRENT_REPO="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+
+            if [ "$REPO_URL" = "$CURRENT_REPO" ] || [ "$REPO_URL" = "https://github.com/${GITHUB_REPOSITORY}" ]; then
+              echo "is-template=true" >> $GITHUB_OUTPUT
+              echo "✅ This is the template repository"
+            else
+              echo "is-template=false" >> $GITHUB_OUTPUT
+              echo "ℹ️ This is a project created from the template"
+              echo "Template URL: $REPO_URL"
+              echo "Current URL: $CURRENT_REPO"
+            fi
+          else
+            echo "is-template=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ .template-config.json not found - not a template"
+          fi
+
+  # ヘルスチェックジョブ（テンプレートリポジトリの場合のみ実行）
+  health-check:
+    name: Template Health Check
+    runs-on: ubuntu-latest
+    needs: check-repository
+    if: needs.check-repository.outputs.is-template == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check template structure
+        id: structure
+        run: |
+          echo "## 📁 Template Structure Check" >> $GITHUB_STEP_SUMMARY
+
+          # 必須ファイルのチェック
+          REQUIRED_FILES=(
+            ".claude/commands/check-template-health.md"
+            ".claude/commands/template-update-scan.md"
+            ".claude/commands/merge-template-update.md"
+            ".template-config.json"
+            ".template-ignore"
+            "CHANGELOG.md"
+            "docs/MAINTENANCE.md"
+          )
+
+          MISSING_FILES=()
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ $file" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ $file (MISSING)" >> $GITHUB_STEP_SUMMARY
+              MISSING_FILES+=("$file")
+            fi
+          done
+
+          # スラッシュコマンドのカウント
+          CMD_COUNT=$(find .claude/commands -name "*.md" -type f | wc -l | tr -d ' ')
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Slash Commands**: $CMD_COUNT/15" >> $GITHUB_STEP_SUMMARY
+
+          # テンプレートファイルのカウント
+          TEMPLATE_COUNT=$(find specs/templates -name "*.template.md" -type f | wc -l | tr -d ' ')
+          echo "**Templates**: $TEMPLATE_COUNT/8" >> $GITHUB_STEP_SUMMARY
+
+          # 結果判定
+          if [ ${#MISSING_FILES[@]} -eq 0 ] && [ "$CMD_COUNT" -eq 15 ] && [ "$TEMPLATE_COUNT" -eq 8 ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "score=100" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Structure Score**: 100/100" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "status=warning" >> $GITHUB_OUTPUT
+            SCORE=$((100 - ${#MISSING_FILES[@]} * 10))
+            echo "score=$SCORE" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Structure Score**: $SCORE/100" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check documentation quality
+        id: docs
+        run: |
+          echo "## 📝 Documentation Quality Check" >> $GITHUB_STEP_SUMMARY
+
+          # ドキュメントファイルのチェック
+          DOCS=(
+            "README.md"
+            "CONTRIBUTING.md"
+            "LICENSE"
+            "CHANGELOG.md"
+            "docs/MAINTENANCE.md"
+            "docs/WORKFLOW_GUIDE.md"
+            "docs/WORKFLOW_STEPS_DETAIL.md"
+            "docs/SPEC_TEMPLATES_GUIDE.md"
+          )
+
+          TOTAL=0
+          VALID=0
+          for doc in "${DOCS[@]}"; do
+            TOTAL=$((TOTAL + 1))
+            if [ -f "$doc" ]; then
+              SIZE=$(wc -c < "$doc")
+              if [ "$SIZE" -gt 100 ]; then
+                echo "✅ $doc (${SIZE} bytes)" >> $GITHUB_STEP_SUMMARY
+                VALID=$((VALID + 1))
+              else
+                echo "⚠️ $doc (${SIZE} bytes - too small)" >> $GITHUB_STEP_SUMMARY
+              fi
+            else
+              echo "❌ $doc (missing)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          SCORE=$((VALID * 100 / TOTAL))
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Documentation Score**: $SCORE/100 ($VALID/$TOTAL files valid)" >> $GITHUB_STEP_SUMMARY
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+
+      - name: Check version consistency
+        id: version
+        run: |
+          echo "## 🔢 Version Consistency Check" >> $GITHUB_STEP_SUMMARY
+
+          # .template-config.json からバージョン取得
+          if [ -f ".template-config.json" ]; then
+            CONFIG_VERSION=$(jq -r '.version' .template-config.json)
+            echo "**Config Version**: $CONFIG_VERSION" >> $GITHUB_STEP_SUMMARY
+
+            # CHANGELOG.md の最新バージョン取得
+            if [ -f "CHANGELOG.md" ]; then
+              CHANGELOG_VERSION=$(grep -m 1 "^## \[" CHANGELOG.md | sed 's/## \[\(.*\)\].*/\1/')
+              echo "**Changelog Version**: $CHANGELOG_VERSION" >> $GITHUB_STEP_SUMMARY
+
+              if [ "$CONFIG_VERSION" = "$CHANGELOG_VERSION" ]; then
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "✅ **Versions Match**" >> $GITHUB_STEP_SUMMARY
+                echo "status=success" >> $GITHUB_OUTPUT
+              else
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "⚠️ **Version Mismatch**" >> $GITHUB_STEP_SUMMARY
+                echo "status=warning" >> $GITHUB_OUTPUT
+              fi
+            fi
+          fi
+
+      - name: Calculate overall health score
+        id: overall
+        run: |
+          echo "## 🎯 Overall Health Score" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # 各スコアの取得
+          STRUCTURE_SCORE=${{ steps.structure.outputs.score }}
+          DOCS_SCORE=${{ steps.docs.outputs.score }}
+
+          # 総合スコア計算（構造50%、ドキュメント50%）
+          OVERALL_SCORE=$(( (STRUCTURE_SCORE * 50 + DOCS_SCORE * 50) / 100 ))
+
+          echo "| Category | Score |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Structure | $STRUCTURE_SCORE/100 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Documentation | $DOCS_SCORE/100 |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Overall** | **$OVERALL_SCORE/100** |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ $OVERALL_SCORE -ge 90 ]; then
+            echo "✅ **Status**: Excellent - No updates needed" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          elif [ $OVERALL_SCORE -ge 70 ]; then
+            echo "⚠️ **Status**: Good - Minor updates recommended" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          elif [ $OVERALL_SCORE -ge 50 ]; then
+            echo "⚠️ **Status**: Needs Improvement - Updates recommended" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          else
+            echo "❌ **Status**: Critical - Urgent updates required" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Create issue if unhealthy
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const score = ${{ steps.overall.outputs.score || 0 }};
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Template Health] Critical health score: ${score}/100`,
+              body: `## Template Health Check Failed
+
+              The automated health check detected critical issues with the template.
+
+              **Overall Score**: ${score}/100
+              **Threshold**: 50/100
+
+              ## Recommended Actions
+
+              1. Review the workflow summary for details
+              2. Run \`/check-template-health\` locally for detailed analysis
+              3. Run \`/template-update-scan\` to identify required updates
+              4. Create a \`template-update/\` branch to address issues
+
+              ## Workflow Run
+
+              ${context.payload.repository.html_url}/actions/runs/${context.runId}
+
+              ---
+
+              *This issue was automatically created by the Template Health Check workflow.*
+              `,
+              labels: ['maintenance', 'automated', 'health-check']
+            });
+
+  # スキップされた場合の通知
+  skip-notification:
+    name: Skip Notification
+    runs-on: ubuntu-latest
+    needs: check-repository
+    if: needs.check-repository.outputs.is-template == 'false'
+
+    steps:
+      - name: Notify skip
+        run: |
+          echo "## ℹ️ Health Check Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This workflow only runs on the template repository." >> $GITHUB_STEP_SUMMARY
+          echo "This appears to be a project created from the template." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Action**: No action needed. This is expected behavior." >> $GITHUB_STEP_SUMMARY
