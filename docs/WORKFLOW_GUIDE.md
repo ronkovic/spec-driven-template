@@ -4,11 +4,29 @@
 
 このガイドでは、Enterprise AI Agent Platformにおけるスペック駆動開発ワークフローの実践的な使い方を説明します。
 
-**10ステップのワークフロー**:
+**11ステップのワークフロー（⭐ レビュー管理を含む）**:
+
+```mermaid
+graph LR
+    A[1. プロジェクト初期化] --> B[2. スペック作成・調整]
+    B --> C[3. 要件追加]
+    C --> D[4. スペック確認]
+    D --> E[5. レビュー実行⭐]
+    E --> F{レビュー結果}
+    F -->|改善必要| G[6. 改善項目実装⭐]
+    F -->|承認| H[7. 実装ガイド作成]
+    G --> H
+    H --> I[8. Todo作成・実装]
+    I --> J[9. 実装チェック]
+    J --> K[10. スペック更新]
+    K --> L[11. コミット]
 ```
-プロジェクト初期化 → スペックレビュー・調整 → 要件追加 → スペック確認 →
-実装内容ドキュメント化 → Todo作成 → 実装 → Todoチェック →
-スペック編集 → コミット
+
+**シンプル版**:
+```
+プロジェクト初期化 → スペック作成・調整 → 要件追加 → スペック確認 →
+レビュー実行⭐ → 改善項目実装⭐ → 実装ガイド作成 → Todo作成・実装 →
+実装チェック → スペック更新 → コミット
 ```
 
 このワークフローに従うことで、**ドキュメント駆動、テスト駆動、品質重視**の開発が実現できます。
@@ -20,15 +38,27 @@
 ### 使用可能なツール
 
 #### スラッシュコマンド
+
+##### プロジェクト管理
 - `/init-project [project-name]` - プロジェクト初期化とスペック作成
+
+##### スペックレビュー・品質管理（⭐ 新機能）
 - `/review-specs [scope]` - スペックドキュメントの包括的レビュー
+- `/review-actions [feature-name]` - レビューアクションアイテムの確認・管理
 - `/adjust-specs [scope]` - スペックの対話的調整・改善
+
+##### 機能開発
 - `/add-requirements [feature-name]` - 新機能の要件定義ドキュメント作成
 - `/add-technical [feature-name]` - 技術仕様ドキュメント作成
 - `/add-implementation [feature-name]` - 実装ガイドドキュメント作成
 - `/spec-check [feature-name]` - 仕様の一貫性検証
-- `/implement [feature-name]` - スペック駆動実装の実行
+
+##### 実装・改善
+- `/implement [feature-name]` - スペック駆動実装の実行（レビュー結果を自動参照）
+- `/implement-improvements [improvement-name]` - 個別改善項目の段階的実装（⭐ 新機能）
 - `/check-implementation [feature-name]` - 実装状況・品質ゲート確認
+
+##### スペック更新・コミット
 - `/update-specs [feature-name]` - スペックへの実装結果反映
 - `/review [file-paths]` - コード品質・セキュリティレビュー
 - `/commit-prep` - コミット前の品質チェック
@@ -1937,23 +1967,332 @@ npm run test
 
 ---
 
+## レビュー管理の実践例（⭐ 新機能）
+
+このセクションでは、新しいレビュー管理機能を使った実践的なワークフローを説明します。
+
+### シナリオ: ユーザーAPIキー管理機能のレビューから実装まで
+
+#### Step 1: スペックレビューの実行
+
+スペック3種（Requirements, Technical, Implementation）を作成した後、レビューを実行します。
+
+**あなたの指示**:
+```bash
+/review-specs user-api-key-management
+```
+
+**Claude Codeの動作**:
+1. 3つのスペックドキュメントを包括的にレビュー
+2. 各ドキュメントの品質スコアを算出
+3. 問題を優先度別に分類（🔴 Critical、🟡 Important、🟢 Minor）
+4. レビュー結果を保存
+
+**出力例**:
+```markdown
+=== Spec Review: user-api-key-management ===
+
+## 総合評価
+📊 スコア: 92% (Approved with conditions)
+
+## 詳細スコア
+- Requirements: 95% (Excellent)
+- Technical: 90% (Good)
+- Implementation: 90% (Good)
+
+## 検出された課題
+
+### 🟡 Important (2項目)
+1. 環境依存の暗号化キー管理強化
+   - 期限: 実装開始前
+   - 影響: セキュリティ、運用
+
+2. レート制限の実装詳細化
+   - 期限: Phase 3前
+   - 影響: パフォーマンス、セキュリティ
+
+### 🟢 Minor (5項目)
+- Success Metrics測定環境の確定
+- ADMINロールスコープの明確化
+- エラーメッセージ多言語対応の詳細化
+- APIキーマスキングルールの統一
+- Approvalセクションの完成
+
+## 次のステップ
+1. /review-actions user-api-key-management で詳細確認
+2. Important項目の対処を検討
+3. /implement-improvements で個別実装、または
+4. /implement でそのまま実装開始
+```
+
+**保存されるファイル**:
+- `/specs/reviews/pending/user-api-key-management.md` - レビュー結果
+- `/specs/improvements/important/encryption-key-management.md` - 改善項目詳細
+- `/specs/improvements/important/rate-limiting-details.md` - 改善項目詳細
+- `/specs/improvements/minor/index.md` - Minor項目一覧
+
+#### Step 2: レビュー結果の確認
+
+**あなたの指示**:
+```bash
+/review-actions user-api-key-management
+```
+
+**Claude Codeの動作**:
+1. レビュー結果ファイルを読み込み
+2. 改善項目を優先度順に表示
+3. 各項目の期限と影響範囲を確認
+4. 推奨アクションを提示
+
+**出力例**:
+```markdown
+=== Review Actions: user-api-key-management ===
+
+## レビューステータス
+- 日付: 2025-11-15
+- スコア: 92%
+- 対応状況: ⏳ Pending
+
+## 🟡 Important Issues (2項目)
+
+### 1. 環境依存の暗号化キー管理強化
+**期限**: 実装開始前（❗ 今すぐ対処推奨）
+**影響範囲**: セキュリティ、運用
+**詳細**: /specs/improvements/important/encryption-key-management.md
+
+**概要**:
+- AWS Secrets Managerの統合
+- 環境別のキー管理戦略
+- キーローテーション手順の文書化
+
+**推奨アクション**:
+```bash
+/implement-improvements encryption-key-management
+```
+
+### 2. レート制限の実装詳細化
+**期限**: Phase 3前
+**影響範囲**: パフォーマンス、セキュリティ
+**詳細**: /specs/improvements/important/rate-limiting-details.md
+
+**概要**:
+- Redisベースのスライディングウィンドウ実装
+- エンドポイント別の制限設定
+- エラーハンドリングとリトライロジック
+
+**推奨アクション**:
+Phase 2完了後に対処
+```
+
+## 🟢 Minor Issues (5項目)
+詳細: /specs/improvements/minor/index.md
+
+## 対処オプション
+1. **今すぐ対処**: `/implement-improvements encryption-key-management`
+2. **実装と並行**: `/implement user-api-key-management`（リスク管理が必要）
+3. **詳細確認**: 改善項目ファイルを直接確認
+```
+
+#### Step 3: 重要な改善項目の実装
+
+実装開始前に対処が必要な項目を先に実装します。
+
+**あなたの指示**:
+```bash
+/implement-improvements encryption-key-management
+```
+
+**Claude Codeの動作**:
+1. 改善項目ファイルを読み込み
+2. 実装前チェックリストを表示
+3. 段階的に実装（仕様更新 → コード実装 → テスト）
+4. 完了条件を検証
+5. ステータスを更新
+
+**実装の流れ**:
+
+**Phase 1: 仕様書の更新**
+```bash
+# Technical仕様書に追加
+/specs/technical/user-api-key-management.md
+
+## シークレット管理
+### AWS Secrets Manager統合
+- 環境変数: AWS_REGION, SECRETS_MANAGER_PREFIX
+- シークレット名: {環境}/api-key-encryption
+- キーローテーション: 90日ごと
+```
+
+**Phase 2: コード実装**
+```typescript
+// src/lib/secrets-manager.ts
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+
+export class SecretsManager {
+  private client: SecretsManagerClient;
+
+  constructor() {
+    this.client = new SecretsManagerClient({ region: process.env.AWS_REGION });
+  }
+
+  async getEncryptionKey(): Promise<string> {
+    const command = new GetSecretValueCommand({
+      SecretId: `${process.env.ENVIRONMENT}/api-key-encryption`
+    });
+    const response = await this.client.send(command);
+    return response.SecretString!;
+  }
+}
+```
+
+**Phase 3: テスト追加**
+```typescript
+// src/lib/__tests__/secrets-manager.test.ts
+describe('SecretsManager', () => {
+  it('should retrieve encryption key from AWS Secrets Manager', async () => {
+    const sm = new SecretsManager();
+    const key = await sm.getEncryptionKey();
+    expect(key).toBeDefined();
+    expect(key.length).toBeGreaterThan(0);
+  });
+});
+```
+
+**完了確認**:
+```markdown
+## 完了条件チェック
+- [x] AWS Secrets Manager統合コード実装
+- [x] 環境別設定ドキュメント化
+- [x] キーローテーション手順文書化
+- [x] 単体テスト追加
+- [ ] セキュリティチームレビュー（別途実施）
+
+ステータス: ✅ 実装完了（レビュー待ち）
+```
+
+**コミット**:
+```bash
+git add .
+git commit -m "feat: AWS Secrets Manager統合による暗号化キー管理強化
+
+Addresses review improvement:
+- Issue: encryption-key-management (Important)
+- 環境別のシークレット管理を実装
+- キーローテーション手順を文書化
+
+Refs: /specs/reviews/pending/user-api-key-management.md
+Refs: /specs/improvements/important/encryption-key-management.md"
+```
+
+#### Step 4: メイン機能の実装開始
+
+改善項目を対処した後、メイン機能の実装を開始します。
+
+**あなたの指示**:
+```bash
+/implement user-api-key-management
+```
+
+**Claude Codeの動作（Step 0: 新機能）**:
+1. レビュー結果の存在を確認
+2. 未対応のImportant項目を警告
+3. ユーザーに対処確認
+
+**出力例**:
+```markdown
+## ⚠️ レビュー結果が存在します
+
+### スコア: 92% (Approved with conditions)
+
+### 対処済み:
+- ✅ 環境依存の暗号化キー管理強化 (encryption-key-management)
+
+### 未対処項目:
+- 🟡 レート制限の実装詳細化 (期限: Phase 3前)
+  → Phase 2で対処予定のため、続行可能
+
+### 対処方法:
+1. そのまま実装を進める（Phase 3前に対処）
+2. 今すぐ対処 → /implement-improvements rate-limiting-details
+3. 詳細確認 → /review-actions user-api-key-management
+
+続行しますか？
+```
+
+**あなたの応答**:
+```
+はい、Phase 3前に対処するので続行してください
+```
+
+**通常の実装フロー**:
+- Step 1-10が実行される（Implementation Guideに従った実装）
+- 各コミットにレビュー参照が含まれる
+
+#### Step 5: Phase 3前の改善項目対処
+
+Phase 3実装前にレート制限の詳細を実装します。
+
+**あなたの指示**:
+```bash
+/implement-improvements rate-limiting-details
+```
+
+（実装プロセスはStep 3と同様）
+
+#### Step 6: レビューの完了
+
+すべての改善項目を対処したら、レビューを完了状態に移動します。
+
+**手動操作**:
+```bash
+# 完了ファイルに移動
+mv specs/reviews/pending/user-api-key-management.md \
+   specs/reviews/completed/user-api-key-management.md
+
+# 完了日を追記
+echo "\n## 完了情報\n- 完了日: 2025-11-16\n- すべての改善項目対処済み" >> \
+  specs/reviews/completed/user-api-key-management.md
+```
+
+### レビュー管理のベストプラクティス
+
+1. **レビューファースト**: 実装前に必ず `/review-specs` を実行
+2. **優先度順に対処**: 🔴 Critical → 🟡 Important → 🟢 Minor
+3. **フェーズと同期**: 改善項目の期限と実装フェーズを合わせる
+4. **コミットで参照**: 改善対処のコミットで必ずレビューファイルを参照
+5. **定期的な棚卸し**: 完了した項目は `completed/` に移動
+
+### メトリクスの活用
+
+`/specs/reviews/index.md` で以下を追跡：
+- 平均レビュースコア
+- 改善項目対処率
+- Critical Issue発生率
+- レビュー→実装の平均時間
+
+---
+
 ## まとめ
 
 ### ワークフローの鍵
 
 1. **ドキュメントファースト**: 実装前に仕様を固める
-2. **小さく・頻繁に**: 大きな機能は分割して実装
-3. **テスト駆動**: テストを先に書く
-4. **品質重視**: `/commit-prep`で必ずチェック
-5. **記録を残す**: ADRで決定を文書化
-6. **スペック更新**: 実装後は必ず反映
+2. **レビューファースト（⭐ 新）**: 実装前に必ず `/review-specs` でレビュー
+3. **優先度管理（⭐ 新）**: Critical → Important → Minor の順で改善項目を対処
+4. **小さく・頻繁に**: 大きな機能は分割して実装
+5. **テスト駆動**: テストを先に書く
+6. **品質重視**: `/commit-prep`で必ずチェック
+7. **記録を残す**: ADRで決定を文書化、レビュー参照をコミットメッセージに含める
+8. **スペック更新**: 実装後は必ず反映
 
 ### 成功の指標
 
 ✅ 仕様が明確で矛盾がない
+✅ レビュースコア >90%（⭐ 新）
+✅ Critical/Important改善項目がすべて対処済み（⭐ 新）
 ✅ テストカバレッジ >80%
 ✅ すべての品質ゲート通過
-✅ コミットメッセージが詳細
+✅ コミットメッセージが詳細（レビュー参照を含む）
 ✅ ADRで決定が記録されている
 ✅ スペックが最新状態
 
@@ -1968,6 +2307,6 @@ npm run test
 
 ---
 
-**最終更新**: 2025-11-13
-**バージョン**: 1.0
+**最終更新**: 2025-11-15
+**バージョン**: 2.0（レビュー管理機能追加）
 **ステータス**: 完成

@@ -11,6 +11,47 @@ Implement the feature following the spec-driven workflow:
 **All output, implementation notes, and communication with the user must be in Japanese (日本語).**
 Only technical identifiers, code, and section headers in markdown may be in English.
 
+## Step 0: Check Review Actions (NEW)
+
+**レビュー結果の確認と対処**
+
+Before starting implementation, check for any pending review actions:
+
+1. **Check for pending review**:
+   ```bash
+   # レビュー結果ファイルの存在確認
+   if exists `/specs/reviews/pending/{{feature-name}}.md`:
+     - Display review summary and score
+     - List Critical/Important issues that must be addressed
+     - Ask user if they want to address issues first
+   ```
+
+2. **Load improvement items**:
+   ```bash
+   # Important Issues の確認
+   for each file in `/specs/improvements/important/`:
+     if related to {{feature-name}}:
+       - Display issue summary
+       - Check if deadline is before current phase
+       - Warn if action required
+   ```
+
+3. **Decision point**:
+   ```markdown
+   ## レビュー結果が存在します
+
+   ### スコア: 92% (Approved with conditions)
+
+   ### 要対処項目:
+   - 🟡 環境依存の暗号化キー管理強化 (期限: 実装開始前)
+   - 🟡 レート制限の実装詳細化 (期限: Phase 3前)
+
+   対処しますか？
+   1. はい - 改善項目を先に実装 → /implement-improvements
+   2. いいえ - そのまま実装を進める（リスクを理解した上で）
+   3. 詳細を確認 → /review-actions {{feature-name}}
+   ```
+
 ## Step 1: Read Implementation Guide
 
 Read `/specs/implementation/{{feature-name}}.md` and extract:
@@ -78,14 +119,38 @@ Use TodoWrite tool to create granular tasks based on the implementation guide:
   - Any risks or blockers
 - Wait for user confirmation before proceeding
 
-## Step 4: Execute Implementation (TDD Approach)
+## Step 4: Execute Implementation (TDD Approach with Review Integration)
+
 For each todo:
-1. Mark todo as in_progress
-2. Write tests first (if applicable)
-3. Implement the feature
-4. Run tests to verify
-5. Mark todo as completed
-6. Commit incrementally
+1. **Check phase-specific improvements**:
+   ```bash
+   # 現在のフェーズに関連する改善項目を確認
+   if current_phase matches improvement_deadline:
+     - Alert user about pending improvements
+     - Suggest running: /implement-improvements [improvement-name]
+   ```
+
+2. Mark todo as in_progress
+
+3. **Apply improvement suggestions**:
+   - Check `/specs/improvements/` for relevant code patterns
+   - Apply security enhancements from review
+   - Use recommended implementations
+
+4. Write tests first (if applicable)
+5. Implement the feature
+6. Run tests to verify
+7. Mark todo as completed
+8. Commit incrementally with review reference:
+   ```bash
+   git commit -m "feat: [feature] - implements [todo]
+
+   Addresses review items:
+   - Issue #1: [if applicable]
+   - Issue #2: [if applicable]
+
+   Refs: /specs/reviews/pending/{{feature-name}}.md"
+   ```
 
 ## Step 5: Update Specs
 - Document any deviations from original spec

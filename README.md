@@ -11,8 +11,9 @@ A comprehensive template for building software projects using spec-driven develo
 ### 主な特徴
 
 - 📋 **11ステップのワークフロー** - プロジェクト初期化からコミットまでの完全な開発サイクル
-- 📝 **包括的なテンプレート** - プロジェクトレベル＆機能レベルの仕様書テンプレート（8個）
-- 🤖 **15のスラッシュコマンド** - 開発プロセスとメンテナンスを自動化
+- 📝 **包括的なテンプレート** - プロジェクトレベル＆機能レベルの仕様書テンプレート（11個）
+- 🤖 **17のスラッシュコマンド** - 開発プロセスとメンテナンスを自動化
+- ⭐ **レビュー管理システム（新機能）** - スペックレビュー結果の追跡と改善項目管理
 - ✅ **品質ゲート** - テスト、型チェック、Lint、セキュリティチェックの自動実行
 - 🎯 **TDD対応** - テスト駆動開発をサポート
 - 📊 **ADR管理** - アーキテクチャ決定の記録
@@ -63,7 +64,7 @@ cd my-project
 /adjust-specs project
 ```
 
-### 4. 最初の機能を実装
+### 4. 最初の機能を実装（⭐ レビュー管理統合版）
 
 ```bash
 # 要件定義から開始
@@ -78,7 +79,18 @@ cd my-project
 # 実装ガイド作成
 /add-implementation user-authentication
 
-# 実装開始
+# ⭐ 新機能: スペックレビューの実行
+/review-specs user-authentication
+# → レビュー結果が /specs/reviews/pending/ に保存される
+
+# ⭐ 新機能: レビュー結果の確認
+/review-actions user-authentication
+# → 改善項目を優先度順に表示
+
+# ⭐ 新機能: 重要な改善項目を先に実装（必要に応じて）
+/implement-improvements encryption-key-management
+
+# 実装開始（レビュー結果を自動参照）
 /implement user-authentication
 ```
 
@@ -86,7 +98,7 @@ cd my-project
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     10ステップワークフロー                          │
+│              11ステップワークフロー（⭐ レビュー管理統合）              │
 └─────────────────────────────────────────────────────────────────┘
 
 1. プロジェクト初期化 (/init-project)
@@ -107,17 +119,26 @@ cd my-project
 6. 実装ガイド作成 (/add-implementation)
    └─> フェーズ別の実装手順、完全なコード例
 
-7. 実装 (/implement)
-   └─> TDD方式で実装、Todo管理
+7. ⭐ スペックレビュー (/review-specs) 【新機能】
+   └─> 3種のスペックを包括的にレビュー、改善項目を優先度別に分類
 
-8. 実装チェック (/check-implementation)
-   └─> 品質ゲート（テスト、型、Lint）通過確認
+8. ⭐ レビュー結果確認 (/review-actions) 【新機能】
+   └─> 改善項目を確認、対処方法を決定
 
-9. スペック更新 (/update-specs)
-   └─> 実装内容を仕様書に反映、ADR作成
+9. ⭐ 改善項目実装 (/implement-improvements) 【新機能・条件付き】
+   └─> Critical/Important項目を個別に実装
 
-10. コミット準備 (/commit-prep)
-    └─> 最終チェック、コミットメッセージ生成
+10. 実装 (/implement) ⭐ レビュー統合版
+    └─> レビュー結果を自動参照、TDD方式で実装、Todo管理
+
+11. 実装チェック (/check-implementation)
+    └─> 品質ゲート（テスト、型、Lint）通過確認
+
+12. スペック更新 (/update-specs)
+    └─> 実装内容を仕様書に反映、ADR作成
+
+13. コミット準備 (/commit-prep)
+    └─> 最終チェック、コミットメッセージ生成（レビュー参照含む）
 ```
 
 詳細な説明は [WORKFLOW_GUIDE.md](./docs/WORKFLOW_GUIDE.md) を参照してください。
@@ -140,9 +161,16 @@ cd my-project
 | `/add-technical [feature]` | 技術仕様作成 | 5-10分 |
 | `/add-implementation [feature]` | 実装ガイド作成 | 5-10分 |
 | `/spec-check [feature]` | 仕様の一貫性チェック | 2-5分 |
-| `/implement [feature]` | 実装開始 | 機能による |
+| `/implement [feature]` | 実装開始（⭐ レビュー統合版） | 機能による |
 | `/check-implementation [feature]` | 実装状況確認 | 2-5分 |
 | `/update-specs [feature]` | スペック更新 | 5-10分 |
+
+### ⭐ レビュー管理（新機能）
+
+| コマンド | 用途 | 所要時間 |
+|---------|------|---------|
+| `/review-actions [feature]` | レビュー結果確認と改善項目管理 | 2-5分 |
+| `/implement-improvements [improvement]` | 個別改善項目の段階的実装 | 項目による |
 
 ### コード品質
 
@@ -168,7 +196,9 @@ cd my-project
 │       ├── check-implementation.md
 │       ├── update-specs.md
 │       ├── review.md
-│       └── commit-prep.md
+│       ├── commit-prep.md
+│       ├── ⭐ review-actions.md    # 新: レビュー結果確認
+│       └── ⭐ implement-improvements.md  # 新: 改善項目実装
 │
 ├── docs/                   # プロジェクトドキュメント
 │   ├── WORKFLOW_GUIDE.md   # ワークフロー詳細ガイド
@@ -184,12 +214,26 @@ cd my-project
 │   │   ├── PHASE_PLAN.template.md
 │   │   ├── requirements.template.md
 │   │   ├── technical.template.md
-│   │   └── implementation.template.md
+│   │   ├── implementation.template.md
+│   │   ├── ⭐ review_result.template.md     # 新: レビュー結果
+│   │   ├── ⭐ improvement_item.template.md  # 新: 改善項目詳細
+│   │   └── ⭐ minor_improvements.template.md # 新: Minor改善項目リスト
 │   │
 │   ├── requirements/       # 機能要件定義（実際のプロジェクトで作成）
 │   ├── technical/          # 技術仕様（実際のプロジェクトで作成）
 │   ├── implementation/     # 実装ガイド（実際のプロジェクトで作成）
-│   └── decisions/          # ADR (Architecture Decision Records)
+│   ├── decisions/          # ADR (Architecture Decision Records)
+│   │
+│   ├── ⭐ reviews/         # レビュー管理（新機能）
+│   │   ├── index.md       # レビューメトリクスと管理方法
+│   │   ├── pending/       # 対応待ちレビュー結果
+│   │   └── completed/     # 対応完了レビュー結果
+│   │
+│   └── ⭐ improvements/    # 改善項目管理（新機能）
+│       ├── critical/      # 🔴 実装前に必須の改善項目
+│       ├── important/     # 🟡 実装中に対処推奨の改善項目
+│       ├── minor/         # 🟢 品質向上のための改善項目
+│       └── archive/       # 対処完了の改善項目アーカイブ
 │
 └── README.md              # このファイル
 ```
@@ -351,6 +395,45 @@ cd my-project
 - トラブルシューティング
 
 **使用タイミング**: 技術仕様後、`/add-implementation [feature-name]` で生成
+
+### ⭐ レビュー管理テンプレート（3個・新機能）
+
+#### 9. review_result.template.md
+スペックレビューの結果を記録
+
+**主要セクション**:
+- メタデータ（レビュー日、スコア、レビュアー、対応状況）
+- 総合評価（スコア、評価ランク、サマリー）
+- 詳細スコア（Requirements、Technical、Implementationの各スコア）
+- 課題サマリー（Critical/Important/Minorの項目数）
+- 改善項目詳細（各項目のタイトル、優先度、期限、影響範囲）
+- 次のステップ（推奨アクション、関連コマンド）
+
+**使用タイミング**: `/review-specs [feature-name]` で自動生成
+
+#### 10. improvement_item.template.md
+個別の改善項目の詳細と実装ガイド
+
+**主要セクション**:
+- メタデータ（優先度、期限、担当、ステータス、関連レビュー）
+- 概要（問題の説明、重要性、影響範囲）
+- 関連スペック（対象機能、関連ドキュメント）
+- 実装ガイド（仕様書更新、コード実装、テスト追加の各ステップ）
+- コード例（具体的な実装コード）
+- 完了条件（チェックリスト形式）
+- 参考資料（関連ドキュメント、外部リンク）
+
+**使用タイミング**: `/review-specs` で Important/Critical項目として自動生成
+
+#### 11. minor_improvements_index.template.md
+複数のMinor改善項目を一覧管理
+
+**主要セクション**:
+- 概要
+- 改善項目リスト（各項目の説明、影響、推奨対応時期、優先度）
+- 対応状況テーブル（項目、ステータス、対応日、担当）
+
+**使用タイミング**: `/review-specs` でMinor項目として自動生成
 
 ## ベストプラクティス
 

@@ -1,8 +1,9 @@
-# ワークフロー詳細ガイド - 10ステップ
+# ワークフロー詳細ガイド - 11ステップ（⭐ レビュー管理を含む）
 
 ## 概要
 
-スペック駆動開発ワークフローの10ステップを詳細に解説します。
+スペック駆動開発ワークフローの11ステップを詳細に解説します。
+新しく追加されたレビュー管理機能により、実装前の品質保証が強化されました。
 
 ---
 
@@ -10,7 +11,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    スペック駆動開発ワークフロー                      │
+│              スペック駆動開発ワークフロー（11ステップ）                │
 └─────────────────────────────────────────────────────────────────┘
 
 Step 0: プロジェクト初期化
@@ -40,31 +41,50 @@ Step 4: スペック確認（技術）
    ↓  → 技術仕様の一貫性検証
    ↓  NG → Step 1 へ
    ↓  OK ↓
-   ↓
-Step 5: 実装内容ドキュメント化
    ↓  /add-implementation [feature-name]
    ↓  → 実装ガイド作成
    ↓
-Step 6: Todo作成・実装開始
+Step 4.5: ⭐ スペックレビュー実行（新機能）
+   ↓  /review-specs [feature-name]
+   ↓  → 3種のスペックを包括的にレビュー
+   ↓  → 優先度別の改善項目検出
+   ↓  → レビュー結果を保存
+   ↓
+Step 4.6: ⭐ レビュー結果確認（新機能）
+   ↓  /review-actions [feature-name]
+   ↓  → 改善項目を優先度順に確認
+   ↓  → 期限と影響範囲を把握
+   ↓  NG（Critical/Important） → Step 4.7 へ
+   ↓  OK（Minor以下） ↓
+   ↓
+Step 4.7: ⭐ 改善項目実装（新機能・条件付き）
+   ↓  /implement-improvements [improvement-name]
+   ↓  → 個別改善項目を段階的実装
+   ↓  → 仕様更新 → コード → テスト
+   ↓  → 完了条件検証
+   ↓
+Step 5: Todo作成・実装開始
    ↓  /implement [feature-name]
+   ↓  → レビュー結果の自動確認（Step 0）
    ↓  → Todoリスト作成
    ↓  → TDD方式で実装
+   ↓  → フェーズ毎に改善項目チェック
    ↓
-Step 7: 実装状況チェック
+Step 6: 実装状況チェック
    ↓  /check-implementation [feature-name]
    ↓  → 品質ゲート実行
-   ↓  NG → Step 6 へ（修正）
+   ↓  NG → Step 5 へ（修正）
    ↓  OK ↓
    ↓
-Step 8: スペック更新
+Step 7: スペック更新
    ↓  /update-specs [feature-name]
    ↓  → 実装結果を仕様書に反映
    ↓  → ADR作成（重要な決定）
    ↓
-Step 9: コミット
+Step 8: コミット
    ↓  /commit-prep
    ↓  → 最終品質チェック
-   ↓  → コミットメッセージ生成
+   ↓  → コミットメッセージ生成（レビュー参照含む）
    ↓  → コミット実行
    ↓
    └─→ 次の機能へ（Step 2に戻る）
@@ -478,48 +498,215 @@ D. スキップ（後で対応）
 
 ---
 
-## Step 5: 実装内容ドキュメント化
+## Step 4.5: ⭐ スペックレビュー実行（新機能）
 
 ### コマンド
 ```bash
-/add-implementation [feature-name]
+/review-specs [feature-name]
 ```
 
 ### 目的
-技術仕様を実装可能な具体的手順に分解。
+実装開始前に3種類のスペック（Requirements、Technical、Implementation）を包括的にレビューし、問題を早期発見する。
 
 ### プロセス
 
-**1. 要件・技術仕様読み込み**
+#### 4.5.1 スペックドキュメントの読み込み
+Claude Codeが以下を確認：
+- `/specs/requirements/[feature-name].md`
+- `/specs/technical/[feature-name].md`
+- `/specs/implementation/[feature-name].md`
 
-**2. 実装フェーズ定義**
-- Phase 1: Database & Data Models
-- Phase 2: Business Logic & API
-- Phase 3: Frontend Components
-- Phase 4: Testing & Documentation
+#### 4.5.2 品質評価
+各スペックを以下の観点で評価：
+- **完全性**: 必須セクションがすべて埋められているか
+- **一貫性**: スペック間で矛盾がないか
+- **実装可能性**: 実装ガイドが具体的で実行可能か
+- **セキュリティ**: セキュリティ要件が適切に定義されているか
+- **テスト可能性**: テストシナリオが明確か
 
-**3. 詳細手順作成**
-各フェーズに対して：
-- 実装ステップ
-- 完全なコード例
-- 検証コマンド
-- 推定時間
+#### 4.5.3 問題の分類
+検出された問題を優先度別に分類：
+- 🔴 **Critical**: 実装前に必ず解決すべき重大な問題
+- 🟡 **Important**: 実装中に対処推奨の重要な問題
+- 🟢 **Minor**: 品質向上のための推奨事項
+
+#### 4.5.4 レビュー結果の保存
+以下のファイルを自動生成：
+- `/specs/reviews/pending/[feature-name].md` - レビュー結果サマリー
+- `/specs/improvements/critical/[issue-name].md` - Critical改善項目（該当時）
+- `/specs/improvements/important/[issue-name].md` - Important改善項目
+- `/specs/improvements/minor/index.md` - Minor改善項目リスト
+
+### 出力例
+```markdown
+=== Spec Review: user-api-key-management ===
+
+## 総合評価
+📊 スコア: 92% (Approved with conditions)
+
+## 詳細スコア
+- Requirements: 95% (Excellent)
+- Technical: 90% (Good)
+- Implementation: 90% (Good)
+
+## 検出された課題
+🔴 Critical: 0項目
+🟡 Important: 2項目
+🟢 Minor: 5項目
+
+## 次のステップ
+/review-actions user-api-key-management で詳細確認
+```
 
 ### 成果物
-- ✅ 実装ガイドドキュメント
-- ✅ 推定時間算出
-
-### 所要時間
-1-2時間
-
-### 次のステップ
-```bash
-/implement [feature-name]
-```
+- レビュー結果ドキュメント
+- 優先度別改善項目リスト
+- レビューメトリクス（スコア、問題数）
 
 ---
 
-## Step 6: Todo作成・実装
+## Step 4.6: ⭐ レビュー結果確認（新機能）
+
+### コマンド
+```bash
+/review-actions [feature-name]
+```
+
+### 目的
+レビューで検出された改善項目を確認し、対処方法を決定する。
+
+### プロセス
+
+#### 4.6.1 レビュー結果の読み込み
+Claude Codeが以下を表示：
+- レビュー日時とスコア
+- 優先度別の改善項目リスト
+- 各項目の期限と影響範囲
+
+#### 4.6.2 改善項目の詳細表示
+各項目について以下を提示：
+- **概要**: 問題の内容
+- **期限**: いつまでに対処すべきか
+- **影響範囲**: どの領域に影響するか
+- **推奨アクション**: 具体的な対処方法
+
+#### 4.6.3 対処方法の選択
+ユーザーに選択肢を提示：
+1. **今すぐ対処**: `/implement-improvements` で個別実装
+2. **実装と並行**: `/implement` でそのまま進める（リスク管理必要）
+3. **詳細確認**: 改善項目ファイルを直接確認
+
+### 出力例
+```markdown
+=== Review Actions: user-api-key-management ===
+
+## 🟡 Important Issues (2項目)
+
+### 1. 環境依存の暗号化キー管理強化
+期限: 実装開始前（❗ 今すぐ対処推奨）
+影響: セキュリティ、運用
+
+推奨アクション:
+/implement-improvements encryption-key-management
+
+### 2. レート制限の実装詳細化
+期限: Phase 3前
+影響: パフォーマンス、セキュリティ
+
+推奨アクション: Phase 2完了後に対処
+
+## 対処オプション
+1. 今すぐ対処
+2. 実装と並行（リスク管理必要）
+3. 詳細確認
+```
+
+### 判断基準
+- **Critical**: 必ずStep 4.7で対処
+- **Important（期限=実装開始前）**: Step 4.7で対処推奨
+- **Important（期限=Phase X）**: 該当フェーズ前に対処
+- **Minor**: 実装と並行可能
+
+---
+
+## Step 4.7: ⭐ 改善項目実装（新機能・条件付き）
+
+### コマンド
+```bash
+/implement-improvements [improvement-name]
+```
+
+### 目的
+レビューで指摘された個別の改善項目を段階的に実装する。
+
+### 実行条件
+- Critical改善項目が存在する場合（必須）
+- Important改善項目で期限が「実装開始前」の場合（推奨）
+
+### プロセス
+
+#### 4.7.1 改善項目ファイルの読み込み
+Claude Codeが以下を確認：
+- `/specs/improvements/{priority}/{improvement-name}.md`
+- メタデータ（優先度、担当、期限）
+- 実装ガイド
+
+#### 4.7.2 実装前チェック
+以下を確認：
+- 前提条件の充足
+- 関連スペックの参照
+- 既存コードの確認
+
+#### 4.7.3 段階的実装
+**Phase 1: 仕様書の更新**
+- Technical仕様書に詳細追加
+- Implementation仕様書に手順追加
+
+**Phase 2: コード実装**
+```typescript
+// 改善項目ファイルから実装ガイドを読み込み
+// 各ステップを実行
+for (const step of implementationGuide.steps) {
+  await executeStep(step);
+  await verifyStep(step);
+}
+```
+
+**Phase 3: テスト追加**
+- 単体テストの追加
+- 統合テストの更新
+
+#### 4.7.4 完了条件の検証
+```markdown
+## 完了条件チェック
+- [x] シークレット管理サービスが選定されている
+- [x] キーローテーション手順が文書化されている
+- [x] 環境別のキー管理方法が明確化されている
+- [x] 単体テスト追加完了
+```
+
+#### 4.7.5 ステータス更新とコミット
+```bash
+git add .
+git commit -m "feat: [improvement-title]
+
+Addresses review improvement:
+- Issue: [improvement-name] (Priority)
+- [改善内容の説明]
+
+Refs: /specs/reviews/pending/[feature-name].md
+Refs: /specs/improvements/{priority}/[improvement-name].md"
+```
+
+### 成果物
+- 更新されたスペックドキュメント
+- 実装コード
+- テストコード
+- 完了レポート
+
+---
+
+## Step 5: Todo作成・実装開始（⭐ レビュー統合版）
 
 ### コマンド
 ```bash
@@ -527,7 +714,40 @@ D. スキップ（後で対応）
 ```
 
 ### 目的
-実装ガイドをTodoリストに分解し、TDD方式で実装。
+実装ガイドをTodoリストに分解し、レビュー結果を統合しながらTDD方式で実装。
+
+### ⭐ Step 0: レビュー結果の自動確認（新機能）
+
+実装開始時に自動的に実行されます：
+
+#### 1. レビュー結果の存在確認
+```bash
+if exists /specs/reviews/pending/[feature-name].md:
+  - レビュースコアを表示
+  - Critical/Important未対処項目を警告
+  - 対処確認をユーザーに問い合わせ
+```
+
+#### 2. 未対処項目の表示
+```markdown
+## ⚠️ レビュー結果が存在します
+
+### スコア: 92% (Approved with conditions)
+
+### 未対処項目:
+- 🟡 レート制限の実装詳細化 (期限: Phase 3前)
+
+### 対処方法:
+1. そのまま進める（Phase 3前に対処）
+2. 今すぐ対処 → /implement-improvements
+3. 詳細確認 → /review-actions
+
+続行しますか？
+```
+
+#### 3. ユーザー判断
+- **はい**: 実装を継続（リスクを理解）
+- **いいえ**: `/implement-improvements` で先に改善項目を対処
 
 ### プロセス
 
@@ -550,14 +770,44 @@ Database & Schema (3 tasks)
 実装を開始しますか？ (yes/no)
 ```
 
-**3. TDD方式で実装**
+**3. ⭐ フェーズごとの改善項目チェック（新機能）**
+各フェーズ開始時に自動チェック：
+```bash
+if current_phase matches improvement_deadline:
+  - 該当する改善項目を警告
+  - 推奨アクション: /implement-improvements [improvement-name]
+```
+
+**例**: Phase 3開始時
+```markdown
+⚠️ Phase 3に関連する改善項目があります
+
+🟡 レート制限の実装詳細化 (期限: Phase 3前)
+
+今すぐ対処しますか？
+1. はい → /implement-improvements rate-limiting-details
+2. いいえ → リスクを理解して続行
+```
+
+**4. TDD方式で実装**
 各タスクに対して：
 1. Todoを `in_progress` にマーク
-2. テストを先に書く
-3. 実装
-4. テスト実行
-5. Todoを `completed` にマーク
-6. 次のタスクへ
+2. ⭐ 改善項目のガイドラインを適用（該当時）
+3. テストを先に書く
+4. 実装
+5. テスト実行
+6. Todoを `completed` にマーク
+7. 次のタスクへ
+
+**5. ⭐ コミットメッセージにレビュー参照（新機能）**
+```bash
+git commit -m "feat: [feature] - implements [todo]
+
+Addresses review items:
+- Issue #1: [if applicable]
+
+Refs: /specs/reviews/pending/[feature-name].md"
+```
 
 ### 成果物
 - ✅ 完全な実装
@@ -811,5 +1061,5 @@ Step 2 に戻り、次の機能の要件定義を開始。
 
 ---
 
-**最終更新**: 2025-11-13
-**バージョン**: 2.0（10ステップ版）
+**最終更新**: 2025-11-15
+**バージョン**: 3.0（11ステップ版 - レビュー管理機能追加）
